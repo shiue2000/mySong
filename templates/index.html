@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>YouTube 音訊下載器</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #fdfcfb, #e2d1c3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: #ffffffcc;
+      backdrop-filter: blur(10px);
+      margin-top: 6rem;
+      padding: 3rem;
+      border-radius: 2rem;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 600px;
+      text-align: center;
+      transition: all 0.3s ease-in-out;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      font-size: 1.1rem;
+      color: #444;
+    }
+
+    input[type="text"], select {
+      width: 80%;
+      padding: 0.7rem;
+      font-size: 1rem;
+      border: 2px solid #ccc;
+      border-radius: 1rem;
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+      transition: border-color 0.3s;
+    }
+
+    input[type="text"]:focus, select:focus {
+      border-color: #ff7a59;
+      outline: none;
+    }
+
+    button {
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+      color: white;
+      background-color: #ff7a59;
+      border: none;
+      border-radius: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #e25a3e;
+    }
+
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    .result {
+      margin-top: 2rem;
+      font-size: 1rem;
+      color: #222;
+    }
+
+    a {
+      color: #0077cc;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin-top: 1rem;
+    }
+
+    li {
+      margin: 0.5rem 0;
+    }
+
+    .footer {
+      margin-top: auto;
+      padding: 2rem;
+      font-size: 0.9rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎧 YouTube 音訊 下載器</h1>
+    <p>請貼上 YouTube 連結，選擇格式與品質</p>
+
+    <input id="yt-url" type="text" placeholder="例如：https://www.youtube.com/watch?v=dQw4w9WgXcQ" />
+
+    <select id="format">
+      <option value="mp3">MP3 音訊</option>
+      <option value="m4a">M4A 音訊</option>
+    </select>
+
+    <select id="audio-quality">
+      <option value="128">128 kbps</option>
+      <option value="192" selected>192 kbps</option>
+      <option value="256">256 kbps</option>
+      <option value="320">320 kbps</option>
+    </select>
+
+    <br />
+    <button id="submitBtn" onclick="submitURL()">開始下載</button>
+
+    <div class="result" id="result"></div>
+  </div>
+
+  <div class="footer">設計者：AS ｜ 檔案儲存位置：桌面 / mySongs</div>
+
+  <script>
+    async function submitURL() {
+      const url = document.getElementById("yt-url").value.trim();
+      const format = document.getElementById("format").value;
+      const quality = document.getElementById("audio-quality").value;
+      const result = document.getElementById("result");
+      const button = document.getElementById("submitBtn");
+
+      if (!url) {
+        result.innerHTML = `<p style="color:red;">請先輸入有效的 YouTube 連結！</p>`;
+        return;
+      }
+
+      result.innerHTML = "⏳ 正在處理，請稍候...";
+      button.disabled = true;
+
+      try {
+        const res = await fetch('/service', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            input: url,
+            format: format,
+            quality: quality
+          })
+        });
+
+        const data = await res.json();
+        button.disabled = false;
+
+        if (data.status === 'success') {
+          let links = '';
+          for (const key in data.download_links) {
+            links += `<li><a href="${data.download_links[key]}" download>📥 下載 ${key.toUpperCase()}</a></li>`;
+          }
+          result.innerHTML = `<p>✅ ${data.message}</p><ul>${links}</ul>`;
+        } else {
+          result.innerHTML = `<p style="color:red;">❌ ${data.message}</p>`;
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+        button.disabled = false;
+        result.innerHTML = `<p style="color:red;">🚨 發生錯誤，請稍後再試。</p>`;
+      }
+    }
+  </script>
+</body>
+</html>

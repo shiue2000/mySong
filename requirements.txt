@@ -1,0 +1,7 @@
+Flask
+yt_dlp
+pydub
+python-dotenv
+gunicorn
+flask_cors
+flask_ngrok
